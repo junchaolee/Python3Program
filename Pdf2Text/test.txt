@@ -1,0 +1,662 @@
+M38_LIAN0807_08_SE_C38.QXD
+
+11/13/09
+
+11:51 AM
+
+Page 38每1
+
+CHAPTER 38
+
+ADVANCED JAVA DATABASE
+PROGRAMMING
+
+Objectives
+
+← To create a universal SQL client for accessing local or remote database (∫38.2).
+
+← To execute SQL statements in a batch mode (∫38.3).
+
+← To process updatable and scrollable result sets (∫38.4).
+
+← To simplify Java database programming using RowSet (∫38.5).
+
+← To create a custom table model for RowSet (∫38.5).
+
+← To store and retrieve images in JDBC (∫38.7).
+
+38每2 Chapter 38 Advanced Java Database Programming
+
+38.1 Introduction
+
+The preceding chapter introduced JDBC＊s basic features. This chapter covers its advanced
+features. You will learn how to develop a universal SQL client for accessing any local or re-
+mote relational database, learn how to execute statements in a batch mode to improve perfor-
+mance, learn scrollable result sets and how to update a database through result sets, learn how
+to use RowSet to simplify database access, and learn how to store and retrieve images.
+
+38.2 A Universal SQL Client
+
+In the preceding chapter, you used various drivers to connect to the database, created state-
+ments for executing SQL statements, and processed the results from SQL queries. This sec-
+tion presents a universal SQL client that enables you to connect to any relational database and
+execute SQL commands interactively, as shown in Figure 38.1. The client can connect to any
+JDBC data source and can submit SQL SELECT commands and non-SELECT commands for
+execution. The execution result is displayed for the SELECT queries, and the execution status
+is displayed for the non-SELECT commands. Listing 38.1 gives the program.
+
+FIGURE 38.1 You can connect to any JDBC data source and execute SQL commands
+interactively.
+
+LISTING 38.1 SQLClient.java
+
+1 import java.awt.*;
+2 import java.awt.event.*;
+3 import javax.swing.*;
+4 import javax.swing.border.*;
+5 import java.sql.*;
+6 import java.util.*;
+7
+8 public class SQLClient extends JApplet {
+
+connection
+
+statement
+
+18
+
+// Text area to display results from SQL commands
+
+38.2 A Universal SQL Client 38每3
+
+38每4 Chapter 38 Advanced Java Database Programming
+
+78
+
+jPanel5.add(new JLabel("Username"));
+
+137
+138
+
+// Connection to the database
+try {
+
+38.2 A Universal SQL Client 38每5
+
+38每6 Chapter 38 Advanced Java Database Programming
+
+196
+1(cid:6)
+198
+
+}
+
+row += resultSet.getString(i) + "\t";
+
+To use the batch update, you add nonselect commands to a batch using the
+
+38.3 Batch Processing 38每7
+
+38每8 Chapter 38 Advanced Java Database Programming
+
+4 import java.awt.event.*;
+5 import java.io.*;
+6 import java.sql.*;
+7 import java.util.*;
+8
+
+64
+65
+66
+67
+68
+
+jPane5.add(jbtCopy, BorderLayout.SOUTH);
+jPane5.add(jPane3, BorderLayout.WEST);
+jPane5.add(jPane4, BorderLayout.CENTER);
+
+add(jlblStatus, BorderLayout.SOUTH);
+
+38.3 Batch Processing 38每9
+
+38每10 Chapter 38 Advanced Java Database Programming
+
+// Read each line from the text file and insert it to the table
+
+124
+125
+126
+127
+128
+
+}
+
+184
+185
+186
+
+}
+
+}
+
+38.4 Scrollable and Updatable Result Set 38每11
+
+38每12 Chapter 38 Advanced Java Database Programming
+
+The possible values of resultSetConcurrency are the constants defined in the
+
+ResultSet:
+
+← CONCUR_READ_ONLY: The result set cannot be used to update the database.
+
+← CONCUR_UPDATABLE: The result set can be used to update the database.
+
+For example, if you want the result set to be scrollable and updatable, you can create a statement,
+as follows:
+
+Statement statement = connection.createStatement
+(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE)
+
+You use the executeQuery method in a Statement object to execute an SQL query that re-
+turns a result set as follows:
+
+ResultSet resultSet = statement.executeQuery(query);
+
+You can now use the methods first(), next(), previous(), and last() to move the cursor
+to the first row, next row, previous row, and last row. The absolute(int row) method moves
+the cursor to the specified row; and the getXxx(int columnIndex) or getXxx(String
+columnName) method is used to retrieve the value of a specified field at the current row. The
+methods insertRow(), deleteRow(), and updateRow() can also be used to insert, delete,
+and update the current row. Before applying insertRow or updateRow, you need to use the
+
+method updateXxx(int columnIndex, Xxx value) or update(String columnName,
+
+Xxx value) to write a new value to the field at the current row. The cancelRowUpdates()
+method cancels the updates made to a row. The close() method closes the result set and
+releases its resource. The wasNull() method returns true if the last column read had a
+value of SQL NULL.
+Listing 38.3 gives an example that demonstrates how to create a scrollable and updatable
+result set. The program creates a result set for the StateCapital table. The StateCapital
+table is defined as follows:
+
+create table StateCapital (
+state varchar(40),
+capital varchar(40)
+);
+
+LISTING 38.3 ScrollUpdateResultSet.java
+
+1 import java.sql.*;
+2
+3 public class ScrollUpdateResultSet {
+4
+public static void main(String[] args)
+5
+throws SQLException, ClassNotFoundException {
+6
+// Load the JDBC driver
+7
+8
+
+System.out.println("Driver loaded");
+
+38.4 Scrollable and Updatable Result Set 38每13
+
+M38_LIAN0807_08_SE_C38.QXD
+
+11/13/09
+
+11:51 AM
+
+Page 38每14
+
+38每14 Chapter 38 Advanced Java Database Programming
+
+After update
+Indiana
+New S
+California
+Texas
+Florida
+
+Indianapolis
+New C
+Sacramento
+Austin
+Tallahassee
+
+scrollable and updatable
+
+update row
+
+insert row
+
+insert row
+
+driver support
+
+The code in lines 18每19 creates a Statement for producing scrollable and updatable
+result sets.
+The program moves the cursor to the second row in the result set (line 29), updates two
+columns in this row (lines 30每31), and invokes the updateRow() method to update the row
+in the underlying database (line 32).
+An updatable ResultSet object has a special row associated with it that serves as a stag-
+ing area for building a row to be inserted. This special row is called the insert row. To insert a
+row, first invoke the moveToInsertRow() method to move the cursor to the insert row (line
+36), then update the columns using the updateXxx method (lines 37每38), and finally insert
+the row using the insertRow() method (line 39). Invoking moveToCurrentRow() moves
+the cursor to the current inserted row (lines 40).
+The program moves to the fourth row and invokes the deleteRow() method to delete the
+row from the database (lines 43每44).
+
+Note
+
+Not all current drivers support scrollable and updatable result sets. The example is tested using
+
+Oracle ojdbc6 driver. You can use supportsResultSetType(int type) and supports-
+ResultSetConcurrency(int type, int concurrency) in the DatabaseMetaData
+
+interface to find out which result type and currency modes are supported by the JDBC driver. But
+even if a driver supports the scrollable and updatable result set, a result set for a complex query
+might not be able to perform an update. For example, the result set for a query that involves sev-
+eral tables is likely not to support update operations.
+
+driver support
+
+The program may not work, if lines 22每23 are replaced by
+
+Note
+
+ResultSet resultSet = statement.executeQuery
+("select * from StateCapital");
+
+38.5 RowSet, JdbcRowSet, and CachedRowSet
+
+JDBC introduced a new RowSet interface that can be used to simplify database program-
+ming. The RowSet interface extends java.sql.ResultSet with additional capabilities that
+allow a RowSet instance to be configured to connect to a JDBC url, username, and password,
+set an SQL command, execute the command, and retrieve the execution result. In essence, it
+combines Connection, Statement, and ResultSet into one interface.
+
+Note
+
+Not all JDBC drivers support RowSet. Currently, the JDBC-ODBC driver does not support all fea-
+tures of RowSet.
+
+extends ResultSet
+
+supported?
+
+38.5 RowSet, JdbcRowSet, and CachedRowSet 38每15
+
+38.5.1 RowSet Basics
+
+There are two types of RowSet objects: connected and disconnected. A connected RowSet
+object makes a connection with a data source and maintains that connection throughout its life
+cycle. A disconnected RowSet object makes a connection with a data source, executes a
+query to get data from the data source, and then closes the connection. A disconnected rowset
+may make changes to its data while it is disconnected and then send the changes back to the
+original source of the data, but it must reestablish a connection to do so.
+There are several versions of RowSet. Two frequently used are JdbcRowSet and Ca
+
+38每16 Chapter 38 Advanced Java Database Programming
+
+18
+
+18
+
+38.5 RowSet, JdbcRowSet, and CachedRowSet 38每17
+
+38每18 Chapter 38 Advanced Java Database Programming
+
+25
+26
+27
+28
+
+// Update the second row
+rowSet.absolute(2); // Move cursor to the 2nd row
+rowSet.updateString("state", "New S"); // Update the column
+rowSet.updateString("capital", "New C"); // Update the column
+
+38.6 Custom RowSetTableModel 38每19
+
+row set is changed, so the listener＊s rowSetChanged handler is invoked. When rowSet.last()
+(line 35) is executed, the cursor is moved, so the listener＊s cursorMoved handler is invoked.
+When rowSet.updateRow() (line 37) is executed, the row is updated, so the listener＊s row-
+Changed handler is invoked.
+
+LISTING 38.7 TestRowSetEvent.java
+
+1 import java.sql.*;
+2 import javax.sql.*;
+3 import com.sun.rowset.*;
+4
+5 public class TestRowSetEvent {
+6
+public static void main(String[] args)
+7
+throws SQLException, ClassNotFoundException {
+8
+// Load the JDBC driver
+
+38每20 Chapter 38 Advanced Java Database Programming
+
+LISTING 38.8 RowSetTableModel.java
+
+1 import java.sql.*;
+2 import javax.sql.*;
+3 import javax.swing.table.AbstractTableModel;
+4
+5 public class RowSetTableModel extends AbstractTableModel
+6
+implements RowSetListener {
+7
+// RowSet for the result set
+8
+
+57
+
+cat
+
+38.6 Custom RowSetTableModel 38每21
+
+38每22 Chapter 38 Advanced Java Database Programming
+
+Now let us turn our attention to developing a useful utility that displays a row set in a
+JTable. As shown in Figure 38.4, you enter or select a JDBC driver and database, enter a
+username and a password, and specify a table name to connect the database and display the
+table contents in the JTable. You can then use the buttons First, Next, Prior, and Last to
+move the cursor to the first row, next row, previous row, and last row in the table, use the
+Delete button to delete a selected row, and use the Commit button to save the change in the
+database.
+
+FIGURE 38.4 The program enables you to navigate the table and delete rows.
+
+The status bar at the bottom of the window shows the current row in the row set. The cur-
+sor in the row set and the row in the JTable are synchronized. You can move the cursor by
+using the navigation buttons or by selecting a row in the JTable.
+Define two classes: TestTableEditor (Listing 38.9) and TableEditor (Listing 38.10).
+TestTableEditor is the main class that enables the user to enter the database connection
+information and a table name. Once the database is connected, the table contents are dis-
+played in an instance of TableEditor. The TableEditor class can be used to browse a
+table and modify a table.
+
+LISTING 38.9 TestTableEditor.java
+
+1 import javax.swing.*;
+2 import java.awt.*;
+3 import java.awt.event.*;
+4 import javax.sql.RowSet;
+5 import com.sun.rowset.CachedRowSetImpl;
+6
+7 public class TestTableEditor extends JApplet {
+8
+private JComboBox jcboDriver = new JComboBox(new String[] {
+
+drives
+
+urls
+
+UI components
+
+27
+28
+
+/** Creates new form TestTableEditor */
+public TestTableEditor() {
+
+38.6 Custom RowSetTableModel 38每23
+
+38每24 Chapter 38 Advanced Java Database Programming
+
+3 import javax.swing.event.*;
+4 import java.awt.*;
+5 import java.awt.event.*;
+6 import javax.sql.*;
+7 import com.sun.rowset.CachedRowSetImpl;
+8
+
+38.6 Custom RowSetTableModel 38每25
+
+63
+64
+65
+66
+67
+68
+
+moveCursor("next");
+
+}
+});
+jbtPrior.addActionListener(new ActionListener() {
+public void actionPerformed(ActionEvent evt) {
+moveCursor("previous");
+
+38每26 Chapter 38 Advanced Java Database Programming
+
+123
+124
+125
+126
+127
+128
+
+/** Move cursor to the specified location */
+private void moveCursor(String whereToMove) {
+try {
+if (whereToMove.equals("first"))
+rowSet.first();
+else if (whereToMove.equals("next") && !rowSet.isLast())
+
+M38_LIAN0807_08_SE_C38.QXD
+
+11/13/09
+
+11:51 AM
+
+Page 38每27
+
+38.7 Storing and Retrieving Images in JDBC 38每27
+
+support mapping for these new SQL types. You can use getBlob, setBinaryStream,
+getClob, setBlob, and setClob, to access SQL BLOB and CLOB values in the interfaces
+
+ResultSet and PreparedStatement.
+
+To store an image into a cell in a table, the corresponding column for the cell must be of the
+BLOB type. For example, the following SQL statement creates a table whose type for the flag
+column is BLOB.
+
+create table Country(name varchar(30),
+description varchar(255));
+
+flag blob
+
+,
+
+In the preceding statement, the description column is limited to 255 characters, which is
+the upper limit for MySQL. For Oracle, the upper limit is 32,672 bytes. For a large character
+field, you can use the CLOB type for Oracle, which can store up to two GB characters. MySQL
+does not support CLOB. However, you can use BLOB to store a long string and convert binary
+data into characters.
+
+Note
+
+Access does not support the BLOB and CLOB types.
+
+supported?
+
+To insert a record with images to a table, define a prepared statement like this one:
+
+PreparedStatement pstmt = connection.prepareStatement(
+"insert into Country values(?, ?, ?)");
+
+Images are usually stored in files. You may first get an instance of InputStream for an image
+file and then use the setBinaryStream method to associate the input stream with a cell in the
+table, as follows:
+
+store image
+
+// Store image to the table cell
+File file = new File(imageFilename);
+InputStream inputImage = new FileInputStream(file);
+pstmt.setBinaryStream(2, inputImage, (int)(file.length()));
+
+To retrieve an image from a table, use the getBlob method, as shown below:
+
+retrieve image
+
+// Store image to the table cell
+Blob blob = rs.getBlob(1);
+ImageIcon imageIcon = new ImageIcon(
+blob.getBytes(1, (int)blob.length()));
+
+Listing 38.11 gives a program that demonstrates how to store and retrieve images in JDBC.
+The program first creates the table and stores data to it. Then the program retrieves the coun-
+try names from the table and adds them to a combo box. When the user selects a name from
+the combo box, the country＊s flag and description are displayed, as shown in Figure 38.5.
+
+FIGURE 38.5 The program enables you to retrieve data, including images, from a table and
+displays them.
+
+38每28 Chapter 38 Advanced Java Database Programming
+
+LISTING 38.11 StoreAndRetrieveImage.java
+
+1 import java.sql.*;
+2 import java.io.*;
+3 import javax.swing.*;
+4 import java.awt.*;
+5 import java.awt.event.*;
+6
+7 public class StoreAndRetrieveImage extends JApplet {
+8
+// Connection to the database
+
+38.7 Storing and Retrieving Images in JDBC 38每29
+
+54
+55
+56
+57
+58
+
+// Create a prepared statement to retrieve flag and description
+
+38每30 Chapter 38 Advanced Java Database Programming
+
+108
+
+try {
+
+Programming Exercises 38每31
+
+REVIEW QUESTIONS
+
+Section 38.3
+
+38 .1 What is batch processing in JDBC? What are the benefits of using batch processing?
+38.2 How do you add an SQL statement to a batch? How do you execute a batch?
+38.3 Can you execute a SELECT statement in a batch?
+38.4 How do you know whether a JDBC driver supports batch updates?
+
+Section 38.4
+
+38.5 What is a scrollable result set? What is an updatable result set?
+38.6 How do you create a scrollable and updatable ResultSet?
+38.7 How do you know whether a JDBC driver supports a scrollable and updatable
+
+ResultSet?
+
+Sections 38.5每38.6
+
+38.8 What are the advantages of RowSet?
+38.9 What are JdbcRowSet and CachedRowSet? What are the differences between
+them?
+38.10 How do you create a JdbcRowSet and a CachedRowSet?
+38.11 Can you scroll and update a RowSet? What method must be invoked to write the
+changes in a CachedRowSet to the database?
+38.12 Describe the handlers in RowSetListener.
+
+Section 38.7
+
+38.13 How do you store images into a database?
+38.14 How do you retrieve images from a database?
+38.15 Does Oracle support the SQL3 BLOB type and CLOB type? What about MySQL
+and Access?
+
+PROGRAMMING EXERCISES
+
+38.1* (Batch update) Write a program that inserts a thousand records to a database, and
+compare the performance with and without batch updates, as shown in Figure
+38.6(a). Suppose the table is defined as follows:
+
+create table Temp(num1 double, num2 double, num3 double)
+
+Use the Ma
+
+M38_LIAN0807_08_SE_C38.QXD
+
+11/13/09
+
+11:51 AM
+
+Page 38每32
+
+38每32 Chapter 38 Advanced Java Database Programming
+
+(a)
+
+(b)
+
+FIGURE 38.6 The program demonstrates the performance improvements that result from
+using batch updates.
+
+38.2** (Scrollable result set) Write a program that uses the buttons First, Next, Prior,
+Last, Insert, Delete, and Update, and modify a single record in the Address table,
+as shown in Figure 38.7.
+
+FIGURE 38.7 You can use the buttons to display and modify a single record in the Address
+table.
+
+38.3** (ResultSetTableModel) Listing 38.(cid:6)
+RowSetTableModel.java, defines a
+table model for RowSet. Develop a new class named ResultSetTableModel
+
+for ResultSet. ResultSetTableModel extends AbstractTableModel.
+
+Write a test program that displays the Course table to a JTable, as shown in
+Figure 38.8. Enable autosort on columns.
+
+FIGURE 38.8 The Course table is displayed in a JTable using ResultSetTableModel.
+
+38.4** (Revising SQLClient.java) Rewrite Listing 38.1, SQLClient.java, to display the
+query result in a JTable, as shown in Figure 38.9.
+
+M38_LIAN0807_08_SE_C38.QXD
+
+11/13/09
+
+11:52 AM
+
+Page 38每33
+
+Programming Exercises 38每33
+
+FIGURE 38.9 The query result is displayed in a JTable.
+
+38.5*** (Editing table using RowSet) Rewrite Listing 38.10 to add an Insert button to
+insert a new row and an Update button to update the row.
+(Displaying images from database) Write a program that uses JTable to dis-
+play the Country table created in Listing 38.11, StoreAndRetrieveImage.java,
+as shown in Figure 38.10.
+
+38.6*
+
+FIGURE 38.10 The Country table is displayed in a JTable instance.
+
+38.7** (Storing and retrieving images using RowSet) Rewrite the example in Listing
+38.11, StoreAndRetrieveImage.java, using RowSet.
+
